@@ -1,0 +1,11 @@
+# Python / plugin build products (all plugin directories)
+**/__pycache__/
+**/*.py[cod]
+**/.pytest_cache/
+**/.coverage
+**/out/
+**/dist/
+**/.venv/
+.DS_Store
+.env
+*.log

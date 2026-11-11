@@ -1,0 +1,51 @@
+name: Publish Douban v0.1.0 (preview)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'plugins/douban/**'
+      - '.github/workflows/publish-douban-v0.1.0.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    if: github.repository == 'threeyang3/CalibrePlugins'
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install test prerequisite
+        run: python -m pip install --disable-pip-version-check lxml
+      - name: Run offline tests and build exact assets
+        working-directory: plugins/douban
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m unittest discover -s tests
+          python -m compileall -q personal src build.py
+          python build.py
+          python -m zipfile -t out/DoubanReadingRecords.zip
+          python -m zipfile -t out/NewDouban.zip
+          echo '39e28c1935da860130771ee8d21cb543c5797c46a53d43ba2fa739d059cbd447  out/DoubanReadingRecords.zip' | sha256sum -c -
+          echo 'bcdb264bef6ea0c0331dafe31b96ec83bde8a4423b4d767c46ee3f2d3c8d351d  out/NewDouban.zip' | sha256sum -c -
+      - name: Create GitHub Release with ZIP assets
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag='douban-v0.1.0'
+          if gh release view "$tag" >/dev/null 2>&1; then
+            echo "Release $tag already exists; no changes made."
+            exit 0
+          fi
+          gh release create "$tag" \
+            plugins/douban/out/DoubanReadingRecords.zip \
+            plugins/douban/out/NewDouban.zip \
+            --target "$GITHUB_SHA" \
+            --title 'Douban v0.1.0 (Preview)' \
+            --notes-file plugins/douban/docs/RELEASE_0.1.0.md \
+            --prerelease
