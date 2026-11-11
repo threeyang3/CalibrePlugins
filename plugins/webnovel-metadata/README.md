@@ -6,12 +6,12 @@
 
 ## 安装
 
-1. 使用本轮交付的 `WebNovelMetadata.zip`，或在本插件目录执行 `python3 build.py`，得到 `dist/WebNovelMetadata.zip`。构建只用 Python 标准库，无需安装测试依赖。不要将整个仓库的源码 ZIP 当成插件安装，也不要解压插件 ZIP。
+1. 从 [WebNovel Metadata v0.1.0 Release](https://github.com/threeyang3/CalibrePlugins/releases/tag/webnovel-metadata-v0.1.0) 下载 `WebNovelMetadata.zip`，或在本插件目录执行 `python3 build.py`，得到 `dist/WebNovelMetadata.zip`。构建只用 Python 标准库，无需安装测试依赖。不要将整个仓库的源码 ZIP 当成插件安装，也不要解压插件 ZIP。
 2. 在 Calibre 中打开 **首选项 → 插件 → 从文件加载插件**，选择该 ZIP。
 3. 按 Calibre 提示完成安装，重新启动 Calibre。
 4. 打开 **首选项 → 元数据下载**，勾选 **WebNovel Metadata**。选择它并点击“配置选中的来源”可设置平台、候选数、超时和简介附注等。
 
-版本：**0.1.0 预览版**，本轮未创建 GitHub Release。按照仓库约定，生成的 `dist/` 不提交，后续正式发行包通过独立 Release 提供。声明最低 Calibre **5.0 / Python 3.8**，使用 Calibre 自带的 `lxml`；本轮真实安装和运行验证环境为 **Calibre 6.29.0**。Windows、macOS、Linux 均按 Calibre 的通用 Python 插件接口实现；macOS / Windows 图形界面仍需对应机器验收。
+版本：**0.1.0 预览版**，通过独立 GitHub Release 提供可安装 ZIP 和 SHA-256 校验文件。按照仓库约定，生成的 `dist/` 不提交到源码仓库。声明最低 Calibre **5.0 / Python 3.8**，使用 Calibre 自带的 `lxml`；本轮真实安装和运行验证环境为 **Calibre 6.29.0**。Windows、macOS、Linux 均按 Calibre 的通用 Python 插件接口实现；macOS / Windows 图形界面仍需对应机器验收。
 
 ## 怎么用
 
@@ -131,7 +131,7 @@ calibre-debug -e tests/calibre_smoke.py
 
 需要主动复核官网可用性时，可在同一隔离配置中执行 `calibre-debug -e tests/live_smoke.py -- --run-live`。它只核对起点、七猫各一项书名搜索，以及一部番茄作品 ID，并下载对应封面；该测试会联系官网，不属于离线测试。
 
-CI 不自动运行。本轮通过本地回归与真实 Calibre CLI 验证，不消耗 GitHub Actions 额度。
+不运行常驻 CI。本次 Release 使用一次性 GitHub Actions 工作流，在发布时重新执行离线测试、构建和校验；真实 Calibre CLI 与官网联网验证结果仍以此前本地验证记录为准。
 
 ## 维护边界
 
