@@ -1,0 +1,3 @@
+# Runtime uses the lxml already bundled with Calibre.
+# Only needed to run parser/engine tests with a standalone Python installation.
+lxml>=4.9

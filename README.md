@@ -7,6 +7,7 @@
 | 项目 | 作用 | 当前版本 | 下载 / 文档 |
 | --- | --- | --- | --- |
 | **Douban · 豆瓣书籍资料与个人阅读记录** | 原有豆瓣公共元数据下载 + 可选的个人标签、评分、阅读状态、简评导入 | `v0.1.0` 预览版 | [版本发布](https://github.com/threeyang3/CalibrePlugins/releases/tag/douban-v0.1.0) · [使用说明](plugins/douban/README.md) |
+| **WebNovel Metadata · 网文元数据** | 从起点、七猫、番茄获取书名、作者、简介、封面、分类与来源标识符；手工修改继续使用 Calibre | `v0.1.0` 预览版 | [使用与构建](plugins/webnovel-metadata/README.md) · [验证记录](plugins/webnovel-metadata/docs/VALIDATION.md) |
 
 ## 目录规范
 
@@ -15,6 +16,7 @@ CalibrePlugins/
 ├── README.md                     # 插件总览与下载入口
 ├── plugins/
 │   ├── README.md                 # 多插件目录与版本约定
+│   ├── webnovel-metadata/        # 网文元数据插件独立项目
 │   └── douban/                   # 豆瓣插件独立项目
 │       ├── README.md
 │       ├── src/                   # 公共元数据插件源码
@@ -31,9 +33,11 @@ CalibrePlugins/
 
 ## 安装
 
-进入相应插件的 Release，下载对应的 **Calibre 插件 `.zip` 文件**（不需要解压），在 Calibre 的“首选项 → 插件 → 从文件加载插件”中安装。不同插件的安装要求请阅读各自说明。
+进入相应插件的 Release，下载对应的 **Calibre 插件 `.zip` 文件**（不需要解压），在 Calibre 的“首选项 → 插件 → 从文件加载插件”中安装。尚未发布 Release 的插件按其 README 构建。不同插件的安装要求请阅读各自说明。
 
 豆瓣插件包含两个单独安装的 ZIP：`NewDouban.zip`（公共元数据）与 `DoubanReadingRecords.zip`（个人阅读记录）。后者目前是**待真实账号验收的预览版**，建议先使用测试书库。
+
+网文插件安装包为 `WebNovelMetadata.zip`，在 `plugins/webnovel-metadata/` 运行 `python3 build.py` 即可生成。起点、七猫的书名搜索及三站详情和封面已通过真实 Calibre 联网验证；番茄匿名搜索在本轮环境受限，使用作品 ID / URL 获取。该插件没有新增自动 CI 工作流。
 
 ## 开发与许可
 
