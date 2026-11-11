@@ -1,0 +1,18 @@
+Calibre Douban — personal reading records development extension
+
+The src/ metadata-source plugin is from fugary/calibre-douban:
+https://github.com/fugary/calibre-douban
+Author: Gary Fu
+Baseline commit: deea4743d177e8439103bece4cf8faa4ab4e0f4a (2025-11-08)
+Its source is unchanged in this development extension.
+
+The personal/ companion, focused tests, and new documentation were added
+on 2026-11-10. The build script now creates both plugin ZIPs and includes
+the upstream Apache License, Version 2.0, with each package.
+
+Douban page selectors and Calibre integration APIs were researched from
+primary source implementations. No code from the GPL-licensed
+threeyang3/douban-import or Calibre examples was transplanted.
+
+This development extension is not an upstream release or an official
+Douban product. See docs/VERIFICATION.md for the exact verification scope.
