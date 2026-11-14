@@ -7,7 +7,7 @@
 | 项目 | 作用 | 当前版本 | 下载 / 文档 |
 | --- | --- | --- | --- |
 | **Douban · 豆瓣书籍资料与个人阅读记录** | 原有豆瓣公共元数据下载 + 可选的个人标签、评分、阅读状态、简评导入 | `v0.1.0` 预览版 | [版本发布](https://github.com/threeyang3/CalibrePlugins/releases/tag/douban-v0.1.0) · [使用说明](plugins/douban/README.md) |
-| **WebNovel Metadata · 网文元数据** | 从起点、七猫、番茄获取书名、作者、简介、封面、分类与来源标识符；手工修改继续使用 Calibre | `v0.1.0` 预览版 | [版本发布](https://github.com/threeyang3/CalibrePlugins/releases/tag/webnovel-metadata-v0.1.0) · [使用说明](plugins/webnovel-metadata/README.md) · [验证记录](plugins/webnovel-metadata/docs/VALIDATION.md) |
+| **WebNovel Metadata · 网文元数据** | 从起点、七猫、番茄获取简介、封面和分类；在 Calibre 栏目中记录首发日期、字数及可点击的连载平台 | `v0.2.0` 预览版 | [版本发布](https://github.com/threeyang3/CalibrePlugins/releases/tag/webnovel-metadata-v0.2.0) · [使用说明](plugins/webnovel-metadata/README.md) |
 | **LightNovel Metadata · 轻小说元数据** | Bangumi、台湾角川、尖端、台湾国家图书馆离线书目、日本 openBD / NDL；按 ISBN 融合并保留系列卷次 | `v0.2.0` 预览（待实机验收） | [下载预览版 ZIP](https://raw.githubusercontent.com/threeyang3/CalibrePlugins/distribution/lightnovel-metadata-v0.2.0-preview/releases/lightnovel-metadata-v0.2.0-preview/LightNovelMetadata.zip) · [SHA-256](https://raw.githubusercontent.com/threeyang3/CalibrePlugins/distribution/lightnovel-metadata-v0.2.0-preview/releases/lightnovel-metadata-v0.2.0-preview/LightNovelMetadata.zip.sha256) · [源码与说明](plugins/lightnovel-metadata/README.md) |
 
 ## 目录规范
@@ -39,7 +39,7 @@ CalibrePlugins/
 
 豆瓣插件包含两个单独安装的 ZIP：`NewDouban.zip`（公共元数据）与 `DoubanReadingRecords.zip`（个人阅读记录）。后者目前是**待真实账号验收的预览版**，建议先使用测试书库。
 
-网文插件安装包为 `WebNovelMetadata.zip`，在 `plugins/webnovel-metadata/` 运行 `python3 build.py` 即可生成。起点、七猫的书名搜索及三站详情和封面已通过真实 Calibre 联网验证；番茄匿名搜索在本轮环境受限，使用作品 ID / URL 获取。已提供独立的 v0.1.0 预览版 Release；仅发布时进行一次性构建校验，不增加日常 CI。
+网文插件的 [v0.2.0 预览版 Release](https://github.com/threeyang3/CalibrePlugins/releases/tag/webnovel-metadata-v0.2.0) 提供 `WebNovelMetadata.zip`（普通元数据及封面下载）和 `WebNovelLibrary.zip`（书库栏目与批量更新）。番茄匿名搜索受限时，可使用作品 ID 或官网详情页 URL。
 
 轻小说插件 `LightNovelMetadata.zip` 已作为 **v0.2.0 预览版**在独立 GitHub 分发分支发布：[直接下载安装包](https://raw.githubusercontent.com/threeyang3/CalibrePlugins/distribution/lightnovel-metadata-v0.2.0-preview/releases/lightnovel-metadata-v0.2.0-preview/LightNovelMetadata.zip) · [校验文件](https://raw.githubusercontent.com/threeyang3/CalibrePlugins/distribution/lightnovel-metadata-v0.2.0-preview/releases/lightnovel-metadata-v0.2.0-preview/LightNovelMetadata.zip.sha256) · [发布说明](https://github.com/threeyang3/CalibrePlugins/blob/distribution/lightnovel-metadata-v0.2.0-preview/releases/lightnovel-metadata-v0.2.0-preview/RELEASE_NOTES.md)。**这是预览包直链，并非 GitHub Releases 条目**。真实 Calibre 客户端与网站兼容性尚待验收；不新增持续 CI。
 

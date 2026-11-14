@@ -29,27 +29,16 @@ def publication_datetime(value):
     return result
 
 
-def comments_html(book, include_details=True):
+def comments_html(book):
     paragraphs = [part.strip() for part in re.split(r"\n\s*\n", book.description or "") if part.strip()]
-    parts = ["<p>" + html.escape(part).replace("\n", "<br />") + "</p>" for part in paragraphs]
-    if include_details:
-        facts = [("连载状态", book.serialization_status), ("字数", book.word_count),
-                 ("首发日期", book.published_at), ("最近更新", book.updated_at),
-                 ("最新章节", book.latest_chapter)]
-        details = ["{}：{}".format(label, html.escape(str(value))) for label, value in facts if value]
-        parts.append('<p>来源：<a href="{}">{}</a> · 作品 ID：{}</p>'.format(
-            html.escape(book.ref.url, quote=True), html.escape(PROVIDERS[book.ref.provider]),
-            html.escape(book.ref.book_id)))
-        if details:
-            parts.append("<p>" + "<br />".join(details) + "</p>")
-    return "\n".join(parts)
+    return "\n".join("<p>" + html.escape(part).replace("\n", "<br />") + "</p>" for part in paragraphs)
 
 
 class WebNovelMetadata(Source):
     name = "WebNovel Metadata"
     description = "从起点、七猫、番茄获取网文元数据和封面；支持官网作品 ID、链接及书名检索。"
     author = "threeyang3"
-    version = (0, 1, 0)
+    version = (0, 2, 0)
     minimum_calibre_version = (5, 0, 0)
     supported_platforms = ["windows", "osx", "linux"]
     capabilities = frozenset(("identify", "cover"))
@@ -70,7 +59,6 @@ class WebNovelMetadata(Source):
         Option("max_covers", "number", 3, "最多下载的候选封面数", "范围 1–5；只要最佳封面时仅返回一张。"),
         Option("include_tags", "bool", True, "获取作品分类标签", "采用来源页中本作品的类型和题材标签。"),
         Option("include_status_tag", "bool", False, "添加连载状态标签", "例如 连载状态:已完结；不代表个人阅读状态。"),
-        Option("include_source_details", "bool", True, "在简介后附上来源及作品信息", "包括来源链接、字数、连载状态、更新时间和最新章节。"),
         Option("saved_html_dir", "string", "", "浏览器已保存详情页目录（可选）", "填写本地目录；文件名为 qidian-作品ID.html、qimao-作品ID.html 或 fanqie-作品ID.html。同名文件优先于在线抓取，更新时请替换或移走。"),
     )
 
@@ -115,26 +103,33 @@ class WebNovelMetadata(Source):
     def identify_results_keygen(self, title=None, authors=None, identifiers=None):
         return lambda mi: getattr(mi, "source_relevance", 0)
 
-    def identify(self, log, result_queue, abort, title=None, authors=None, identifiers=None, timeout=30):
+    def identify_books(self, log, abort, title=None, authors=None, identifiers=None, timeout=30):
+        return MetadataEngine(self._settings()).identify(log, abort, title, authors, identifiers, timeout)
+
+    def metadata_for_book(self, book):
         settings = self._settings()
-        books = MetadataEngine(settings).identify(log, abort, title, authors, identifiers, timeout)
+        mi = Metadata(book.title, list(book.authors))
+        mi.set_identifier(book.ref.provider, book.ref.book_id)
+        mi.languages = ["zho"]
+        mi.comments = comments_html(book) or None
+        tags = list(book.tags) if settings["include_tags"] else []
+        if settings["include_status_tag"] and book.serialization_status:
+            tags.append("连载状态:" + book.serialization_status)
+        mi.tags = list(dict.fromkeys(tags))
+        published = publication_datetime(book.published_at)
+        if published is not None:
+            mi.pubdate = published
+        mi.has_cover = bool(book.cover_url and allowed_url(book.cover_url, book.ref.provider, cover=True))
+        self.clean_downloaded_metadata(mi)
+        return mi
+
+    def identify(self, log, result_queue, abort, title=None, authors=None, identifiers=None, timeout=30):
+        books = self.identify_books(log, abort, title, authors, identifiers, timeout)
         for index, book in enumerate(books):
             if abort.is_set():
                 return
-            mi = Metadata(book.title, list(book.authors))
-            mi.set_identifier(book.ref.provider, book.ref.book_id)
-            mi.languages = ["zho"]
-            mi.comments = comments_html(book, settings["include_source_details"]) or None
-            tags = list(book.tags) if settings["include_tags"] else []
-            if settings["include_status_tag"] and book.serialization_status:
-                tags.append("连载状态:" + book.serialization_status)
-            mi.tags = list(dict.fromkeys(tags))
-            published = publication_datetime(book.published_at)
-            if published is not None:
-                mi.pubdate = published
+            mi = self.metadata_for_book(book)
             mi.source_relevance = index
-            mi.has_cover = bool(book.cover_url and allowed_url(book.cover_url, book.ref.provider, cover=True))
-            self.clean_downloaded_metadata(mi)
             if mi.has_cover:
                 self.cache_identifier_to_cover_url(book.ref.provider + ":" + book.ref.book_id, book.cover_url)
             result_queue.put(mi)

@@ -11,11 +11,9 @@ from zipfile import ZIP_DEFLATED, ZipFile, ZipInfo
 ROOT = Path(__file__).resolve().parent
 
 
-def build(output=None):
-    source = ROOT / "src"
-    output = Path(output) if output else ROOT / "dist" / "WebNovelMetadata.zip"
+def build_package(source, output):
     files = sorted(path for path in source.rglob("*") if path.is_file()
-                   and (path.suffix == ".py" or path.name == "plugin-import-name-webnovel_metadata.txt"))
+                   and (path.suffix == ".py" or path.name.startswith("plugin-import-name-")))
     for path in files:
         if path.suffix == ".py":
             # The minimum Calibre version uses Python 3.8.
@@ -41,7 +39,14 @@ def build(output=None):
     return output
 
 
+def build(output=None):
+    path = Path(output) if output else ROOT / "dist" / "WebNovelMetadata.zip"
+    return build_package(ROOT / "src", path)
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--output", type=Path, help="Path for the installable ZIP")
-    build(parser.parse_args().output)
+    parser.add_argument("--output", type=Path, help="Path for the metadata source ZIP")
+    args = parser.parse_args()
+    source_zip = build(args.output)
+    build_package(ROOT / "library", source_zip.with_name("WebNovelLibrary.zip"))

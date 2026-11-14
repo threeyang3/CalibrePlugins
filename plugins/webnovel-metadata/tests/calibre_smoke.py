@@ -100,6 +100,10 @@ def main():
                   source.id_from_url(source.get_book_url(result.identifiers)[2]) == (provider, identity))
             check(provider + " cover cached before publication", bool(source.get_cached_cover_url(result.identifiers)))
             check(provider + " personal rating and date not invented", result.rating is None and result.pubdate is None)
+            book, = source.identify_books(log, Event(), identifiers={provider: identity}, timeout=20)
+            check(provider + " structured result and synopsis-only comments",
+                  book.ref.book_id == identity and result.comments == plugin.comments_html(book)
+                  and "作品 ID：" not in result.comments and "字数：" not in result.comments)
             covers = Queue()
             source.download_cover(log, covers, Event(), identifiers={provider: identity}, timeout=20, get_best_cover=True)
             check(provider + " cover download through Source", covers.qsize() == 1)
