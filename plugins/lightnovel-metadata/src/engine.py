@@ -1,14 +1,16 @@
 """Bounded multisource discovery; no library writes and no background work."""
 import re
 from urllib.parse import urlsplit
-from .models import combine, isbn, norm, relevance, clean, FIELD_NAMES, SOURCES
+from .models import combine, isbn, norm, relevance, clean, FIELD_NAMES
 from .network import Client, FetchError, allowed
-from .providers import bangumi, books_tw, ndl, openbd, kadokawa_tw, spp_tw, ncl_tw
+from .providers import bangumi, books_tw, kadokawa_jp, kadokawa_tw, ncl_tw, ndl, openbd, spp_tw
 
 SOURCE_NAMES = {'bangumi': 'Bangumi', 'books_tw': '博客来（台湾）',
                 'kadokawa_tw': '台灣角川', 'spp_tw': '尖端出版',
                 'ncl_tw': '台湾国家图书馆开放书目',
-                'ndl': '日本国立国会图书馆', 'openbd': 'openBD（日本）'}
+                'kadokawa_jp': 'KADOKAWA', 'ndl': '日本国立国会图书馆',
+                'openbd': 'openBD（日本）'}
+RESULT_ORDER = ('kadokawa_tw', 'spp_tw', 'books_tw', 'ncl_tw', 'bangumi', 'kadokawa_jp', 'openbd', 'ndl')
 
 
 def explicit_sources(title, identifiers):
@@ -17,6 +19,7 @@ def explicit_sources(title, identifiers):
     for key, pattern in (('bangumi', r'[1-9][0-9]{0,11}'),
                          ('books_tw', r'001[0-9]{7}'),
                          ('spp_tw', r'[1-9][0-9]{4,11}'),
+                         ('kadokawa_jp', kadokawa_jp.ID),
                          ('kadokawa_tw', r'[0-9]{13}')):
         raw = identifiers.get(key)
         if raw is not None and str(raw).strip():
@@ -42,6 +45,9 @@ def explicit_sources(title, identifiers):
         elif parsed.hostname == 'www.kadokawa.com.tw':
             sid = kadokawa_tw.isbn_from_url(raw)
             key = 'kadokawa_tw'
+        elif parsed.hostname in ('www.kadokawa.co.jp', 'store.kadokawa.co.jp'):
+            sid = kadokawa_jp.product_id(raw)
+            key = 'kadokawa_jp'
         elif parsed.hostname == 'www.spp.com.tw':
             sid = spp_tw.product_id(raw)
             key = 'spp_tw'
@@ -108,11 +114,12 @@ class Engine:
                 return None
 
         # Explicit site IDs have priority. Do not fall back to a homonymous work.
+        loaders = {'bangumi': bangumi.detail, 'books_tw': books_tw.detail,
+                   'kadokawa_tw': kadokawa_tw.detail, 'spp_tw': spp_tw.detail,
+                   'kadokawa_jp': lambda client, sid: kadokawa_jp.detail(client, sid, code)}
         for provider, sid in ids.items():
             if abort.is_set():
                 return []
-            loaders = {'bangumi': bangumi.detail, 'books_tw': books_tw.detail,
-                       'kadokawa_tw': kadokawa_tw.detail, 'spp_tw': spp_tw.detail}
             rec = attempt(provider, '精确条目', lambda: loaders[provider](client, sid))
             if rec:
                 found.append(rec)
@@ -155,6 +162,13 @@ class Engine:
         # only a Taiwan Books.com.tw product match may establish a Taiwan ISBN.
         isbn_pool = set([code] if code else [])
         isbn_pool.update(rec.isbn for rec in found if rec.isbn)
+        if code.startswith('9784') and not direct:
+            product_ids = attempt('kadokawa_jp', 'ISBN 搜索',
+                                  lambda: kadokawa_jp.search(client, code, max_hits)) or []
+            for pid in product_ids:
+                rec = attempt('kadokawa_jp', '商品', lambda pid=pid: kadokawa_jp.detail(client, pid, code))
+                if rec:
+                    found.append(rec)
         if code and not direct and code.startswith(('978626', '978986', '978957')):
             # Bookstore search returns product IDs, not ISBNs; validate the actual detail ISBN.
             ids_tw = attempt('books_tw', 'ISBN 搜索', lambda: books_tw.search(client, code, max_hits)) or []
@@ -220,8 +234,8 @@ class Engine:
             result = unique
         if not code and not direct:
             result.sort(key=lambda r: (relevance(r, search_query, authors) or (2, 1.0),
-                                       (['kadokawa_tw','spp_tw','books_tw','ncl_tw','bangumi','openbd','ndl'].index(r.source) if r.source in SOURCE_NAMES else 99)))
+                                       RESULT_ORDER.index(r.source)))
         else:
             result.sort(key=lambda r: (0 if r.isbn == code and code else 1,
-                                       (['kadokawa_tw','spp_tw','books_tw','ncl_tw','bangumi','openbd','ndl'].index(r.source) if r.source in SOURCE_NAMES else 99)))
+                                       RESULT_ORDER.index(r.source)))
         return result[:max_hits * 3]

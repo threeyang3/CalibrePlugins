@@ -2,15 +2,13 @@
 
 面向本地 EPUB/电子书书库的 **Calibre 元数据来源插件**，聚合 Bangumi、台版书店与出版社、台湾国家图书馆开放书目，以及日本 openBD、国立国会图书馆（NDL）资料。关注轻小说的**作品、系列、单卷、日文版、繁体中文版**的准确识别。
 
-> **v0.2.0 预览版**：46 项离线单元/模拟适配测试通过；尚未完成真实 Calibre 安装及网站实时数据验收。请先在测试书库试用，不要批量替换已有书目。此版不自动读写 EPUB 内部封面或元数据，也不读取个人评分、笔记、收藏和阅读状态。
+**v0.3.0 预览版**增加了「轻小说书目」工具栏操作，可按 ISBN 补齐公开书目资料，同时保留已有的书库数据与 EPUB 文件。
 
-## 下载预览版（已合并到 main）
+## 下载预览版
 
-- [直接下载 LightNovelMetadata.zip](https://raw.githubusercontent.com/threeyang3/CalibrePlugins/distribution/lightnovel-metadata-v0.2.0-preview/releases/lightnovel-metadata-v0.2.0-preview/LightNovelMetadata.zip)
-- [SHA-256 校验文件](https://raw.githubusercontent.com/threeyang3/CalibrePlugins/distribution/lightnovel-metadata-v0.2.0-preview/releases/lightnovel-metadata-v0.2.0-preview/LightNovelMetadata.zip.sha256) · [预览版发布说明](https://github.com/threeyang3/CalibrePlugins/blob/distribution/lightnovel-metadata-v0.2.0-preview/releases/lightnovel-metadata-v0.2.0-preview/RELEASE_NOTES.md)
-- [本仓库主分支源码](https://github.com/threeyang3/CalibrePlugins/tree/main/plugins/lightnovel-metadata)
-
-此安装包来自**独立分发分支**，不消耗 GitHub Actions 额度；目前**不是 GitHub Releases 页面中的正式 Release 条目**。已重建并确认安装包与源码构建输出字节级一致（SHA-256：`d13134b3f1d3d1be1e5727738401af517977d30121fc134e2373258624a0f72c`）。真实 Calibre 和网站实测仍待完成。
+- [LightNovelMetadata.zip](https://github.com/threeyang3/CalibrePlugins/releases/download/lightnovel-metadata-v0.3.0/LightNovelMetadata.zip)
+- [LightNovelLibrary.zip](https://github.com/threeyang3/CalibrePlugins/releases/download/lightnovel-metadata-v0.3.0/LightNovelLibrary.zip)
+- [发布说明与 SHA-256 校验文件](https://github.com/threeyang3/CalibrePlugins/releases/tag/lightnovel-metadata-v0.3.0)
 
 ## 数据源与查询能力
 
@@ -23,6 +21,7 @@
 | [台湾国家图书馆开放书目](https://data.gov.tw/dataset/6730) | **用户预先导入的本地 SQLite 索引**，ISBN/书名 | ISBN、申请书名、作者、出版机构、预订出版日 | 离线查询；预订日期**不会当作正式出版日期** |
 | [openBD](https://openbd.jp/) | 日本 ISBN | 日文书名、作者、出版社、日期、部分封面 | 只有 ISBN 查询；覆盖率尤其是封面取决于上游数据 |
 | [日本 NDL Search](https://ndlsearch.ndl.go.jp/help/api) | 日文书名或 ISBN | 日文书名、出版单位、作者、ISBN、日期 | 仅使用公开书目；可能返回多个候选版本 |
+| [日本 KADOKAWA](https://www.kadokawa.co.jp/) | 日本 ISBN 或官网商品 ID | 书名、封面、作者、插画师、上市日期 | 只采用商品页上与查询一致的纸本 ISBN |
 
 网站页面适配器可能因访问限制/改版而失效。不尝试登录、绕过验证码、抓取正文或下载付费内容。联网请求有站点白名单、最大响应体积、超时及取消检查。
 
@@ -35,9 +34,15 @@ python3 -m unittest discover -s tests -p 'test_*.py' -v
 python3 build.py
 ```
 
-运行时依赖 Calibre 自带 Python 及 `lxml`；构建脚本仅用标准库。将下载的预览包或构建生成的 `dist/LightNovelMetadata.zip` **不解压**，在 Calibre「首选项 → 插件 → 从文件加载插件」中安装，重启后在「元数据下载」里启用 `LightNovel Metadata`。最低目标版本为 Calibre 5.0，macOS/Windows/Linux 实机验收仍待完成。
+构建生成 `dist/LightNovelMetadata.zip`（普通元数据源）和 `dist/LightNovelLibrary.zip`（书库操作）。在 Calibre **首选项 → 插件 → 从文件加载插件** 分别安装两个 ZIP，重启后在「元数据下载」中启用 `LightNovel Metadata`。元数据源需要 Calibre 5.0 或更新版本，书库操作需要 Calibre 8.0 或更新版本。
 
-**先用测试书库和已知 ISBN 实测**：核对书名、版次、封面及来源，再决定使用哪些字段；特别注意 Calibre 的「简介」字段可能已经包含你的私人笔记，必要时在 Calibre 元数据下载设置中禁用该字段。
+## 补齐书库里的轻小说资料
+
+在目标书库选择 **轻小说书目 → 建立轻小说书目栏目**，并按提示重启。选中一本或多本已有 ISBN 的书，点击工具栏上的「轻小说书目」补齐公开资料。如果按钮未显示，可在 **首选项 → 工具栏与菜单 → 主工具栏** 添加。已有的书名、作者、简介、语言、丛书、出版方、出版日期和其他自定义字段均保留。公开书目的译者和插画师分别存入「译者（书目）」和「插画师（书目）」，已有填写值优先。作品原名与部分日期也有独立栏目。
+
+「EPUB 制作者」供手填，书目下载不会写入这列。Calibre 封面只在书库缺图时补齐。原始 EPUB 文件也会保留，包括内部元数据、封面和制作者署名。
+
+书库内 ISBN 重复、命中多个互相冲突的候选、上下卷或明确版本标记冲突时，书库操作会跳过该条目。需要手动选择候选和字段时，可继续使用 Calibre 自带的「编辑元数据 → 下载元数据」。
 
 ## 查询方式
 
@@ -66,7 +71,7 @@ https://bgm.tv/subject/123456
 
 在「元数据下载 → 配置 LightNovel Metadata」里可填写各字段首选来源。十个来源优先项包括：**书名、作者、出版社、日期、封面、简介、系列、标签、插画师、译者**。默认值均为 `auto`。
 
-可填入下列来源代号之一：`bangumi`、`books_tw`、`kadokawa_tw`、`spp_tw`、`ncl_tw`、`openbd`、`ndl`，或 `auto`。例如：
+可填入下列来源代号之一：`bangumi`、`books_tw`、`kadokawa_tw`、`spp_tw`、`ncl_tw`、`openbd`、`ndl`、`kadokawa_jp`，或 `auto`。例如：
 
 - `pref_title = books_tw`：同一 ISBN 下优先使用博客来的繁体书名。
 - `pref_cover = kadokawa_tw`：同一 ISBN 下优先使用台湾角川的封面。
@@ -74,7 +79,7 @@ https://bgm.tv/subject/123456
 
 **优先级仅作用于 checksum 正确、完全相同 ISBN 的记录**。首选来源缺失该字段时退回其他匹配来源，不会因此借用日版/台版的另一 ISBN。对于同一 ISBN 存在不同来源 ID、冲突卷次或语言的情况，拒绝合并并保留独立候选。`tags`、插画师及译者在 `auto` 下去重合并，明确指定来源则不跨来源拼接。
 
-融合结果的「简介」附注可以看到每个关键字段来自哪个网站，便于核对。当前使用 Calibre 原生来源选项（文本设置），没有另建一套复杂表单。
+在元数据源设置里，可选择让普通下载的简介显示书目字段和来源。默认下载简介正文。书库操作会将公开译者等信息写入对应的书目列。
 
 ## Bangumi 系列与分卷
 

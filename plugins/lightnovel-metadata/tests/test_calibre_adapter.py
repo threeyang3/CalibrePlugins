@@ -88,7 +88,9 @@ class CalibreContractTests(unittest.TestCase):
         self.assertEqual(mi.pubdate.year, 2025)
         self.assertEqual(mi.series_index, 1.0)
         self.assertNotIn('<script>', mi.comments)
-        self.assertIn('译者', mi.comments)
+        self.assertNotIn('译者', mi.comments)
+        source.prefs['include_source_comments'] = True
+        self.assertIn('译者', source.metadata_for_book(rec).comments)
         self.assertTrue(mi.has_cover)
         self.assertEqual(source.get_book_urls(mi.identifiers)[0][0], 'bangumi')
         self.assertEqual(source.get_cached_cover_url(mi.identifiers), rec.cover)

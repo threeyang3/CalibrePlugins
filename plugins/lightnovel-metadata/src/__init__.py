@@ -12,12 +12,12 @@ from .models import isbn
 from .network import Client, FetchError, allowed, is_image
 
 
+SOURCE_PREFERENCE_HELP = 'auto / ' + ' / '.join(SOURCE_NAMES) + '；仅同 ISBN 合并时应用。'
+
+
 def comments_html(record):
-    blocks = []
-    if record.description:
-        paragraphs = [html.escape(p.strip()) for p in re.split(r'\n\s*\n', record.description) if p.strip()]
-        if paragraphs:
-            blocks.extend('<p>%s</p>' % p.replace('\n', '<br />') for p in paragraphs)
+    synopsis = synopsis_html(record)
+    blocks = [synopsis] if synopsis else []
     extra = []
     for label, value in (('原名', record.original_title), ('译者', '、'.join(record.translators)),
                          ('插画', '、'.join(record.illustrators)), ('预计出版日（台湾新书预告）' if record.source == 'ncl_tw' else '出版日期（原文）', record.date_text if not record.pubdate else ''),
@@ -46,18 +46,23 @@ def comments_html(record):
     return '\n'.join(blocks)
 
 
+def synopsis_html(record):
+    paragraphs = [html.escape(p.strip()) for p in re.split(r'\n\s*\n', record.description or '') if p.strip()]
+    return '\n'.join('<p>%s</p>' % p.replace('\n', '<br />') for p in paragraphs) or None
+
+
 class LightNovelMetadata(Source):
     name = 'LightNovel Metadata'
     author = 'threeyang3'
-    description = '轻小说分卷元数据：Bangumi、台版出版社/书店、NCL 离线书目、日本 openBD/NDL。'
-    version = (0, 2, 0)
+    description = '轻小说分卷元数据：Bangumi、台版出版社和书店、NCL 离线书目，以及日本 KADOKAWA、openBD 和 NDL。'
+    version = (0, 3, 0)
     minimum_calibre_version = (5, 0, 0)
     supported_platforms = ['windows', 'osx', 'linux']
     capabilities = frozenset(('identify', 'cover'))
     touched_fields = frozenset(('title', 'authors', 'publisher', 'pubdate', 'comments', 'tags',
                                 'languages', 'isbn', 'series', 'series_index',
                                 'identifier:bangumi', 'identifier:books_tw',
-                                'identifier:kadokawa_tw', 'identifier:spp_tw'))
+                                'identifier:kadokawa_tw', 'identifier:spp_tw', 'identifier:kadokawa_jp'))
     has_html_comments = True
     cached_cover_url_is_reliable = False
     can_get_multiple_covers = True
@@ -72,20 +77,21 @@ class LightNovelMetadata(Source):
         Option('resolve_bangumi_series', 'bool', True, 'Bangumi 系列关联', '从公开关联确认系列，但不自动合并不同 ISBN。'),
         Option('enable_openbd', 'bool', True, '启用 openBD（日本）', '仅通过 ISBN 查询正式出版的日文书目。'),
         Option('enable_ndl', 'bool', True, '启用日本国立国会图书馆', '官方书目 OpenSearch，书名及 ISBN。'),
+        Option('enable_kadokawa_jp', 'bool', True, '启用 KADOKAWA（日本）', '核对官网同一 ISBN 版本的书目信息和封面。'),
         Option('include_series_entries', 'bool', False, '允许作品级/系列级条目', '默认不导入 Bangumi 系列总条目，防止错当单卷。'),
         Option('max_candidates', 'number', 3, '单数据源候选上限', '范围 1–6，避免大量请求。'),
         Option('request_timeout', 'number', 7, '单次请求超时秒数', '范围 1–20；也受 Calibre 总时限约束。'),
-        Option('pref_title', 'string', 'auto', '书名优先来源', 'auto / bangumi / books_tw / kadokawa_tw / spp_tw / ncl_tw / openbd / ndl；仅同 ISBN 合并时应用。'),
-        Option('pref_authors', 'string', 'auto', '作者优先来源', 'auto / bangumi / books_tw / kadokawa_tw / spp_tw / ncl_tw / openbd / ndl；仅同 ISBN 合并时应用。'),
-        Option('pref_publisher', 'string', 'auto', '出版社优先来源', 'auto / bangumi / books_tw / kadokawa_tw / spp_tw / ncl_tw / openbd / ndl；仅同 ISBN 合并时应用。'),
-        Option('pref_pubdate', 'string', 'auto', '出版日期优先来源', 'auto / bangumi / books_tw / kadokawa_tw / spp_tw / ncl_tw / openbd / ndl；仅同 ISBN 合并时应用。'),
-        Option('pref_cover', 'string', 'auto', '封面优先来源', 'auto / bangumi / books_tw / kadokawa_tw / spp_tw / ncl_tw / openbd / ndl；仅同 ISBN 合并时应用。'),
-        Option('pref_description', 'string', 'auto', '简介优先来源', 'auto / bangumi / books_tw / kadokawa_tw / spp_tw / ncl_tw / openbd / ndl；仅同 ISBN 合并时应用。'),
-        Option('pref_series', 'string', 'auto', '系列优先来源', 'auto / bangumi / books_tw / kadokawa_tw / spp_tw / ncl_tw / openbd / ndl；仅同 ISBN 合并时应用。'),
-        Option('pref_tags', 'string', 'auto', '标签优先来源', 'auto / bangumi / books_tw / kadokawa_tw / spp_tw / ncl_tw / openbd / ndl；仅同 ISBN 合并时应用。'),
-        Option('pref_illustrators', 'string', 'auto', '插画师优先来源', 'auto / bangumi / books_tw / kadokawa_tw / spp_tw / ncl_tw / openbd / ndl；仅同 ISBN 合并时应用。'),
-        Option('pref_translators', 'string', 'auto', '译者优先来源', 'auto / bangumi / books_tw / kadokawa_tw / spp_tw / ncl_tw / openbd / ndl；仅同 ISBN 合并时应用。'),
-        Option('include_source_comments', 'bool', True, '简介附带出处和出版字段', '不包括任何用户评分、读书笔记或收藏状态。'),
+        Option('pref_title', 'string', 'auto', '书名优先来源', SOURCE_PREFERENCE_HELP),
+        Option('pref_authors', 'string', 'auto', '作者优先来源', SOURCE_PREFERENCE_HELP),
+        Option('pref_publisher', 'string', 'auto', '出版社优先来源', SOURCE_PREFERENCE_HELP),
+        Option('pref_pubdate', 'string', 'auto', '出版日期优先来源', SOURCE_PREFERENCE_HELP),
+        Option('pref_cover', 'string', 'auto', '封面优先来源', SOURCE_PREFERENCE_HELP),
+        Option('pref_description', 'string', 'auto', '简介优先来源', SOURCE_PREFERENCE_HELP),
+        Option('pref_series', 'string', 'auto', '系列优先来源', SOURCE_PREFERENCE_HELP),
+        Option('pref_tags', 'string', 'auto', '标签优先来源', SOURCE_PREFERENCE_HELP),
+        Option('pref_illustrators', 'string', 'auto', '插画师优先来源', SOURCE_PREFERENCE_HELP),
+        Option('pref_translators', 'string', 'auto', '译者优先来源', SOURCE_PREFERENCE_HELP),
+        Option('include_source_comments', 'bool', False, '简介附带出处和出版字段', '仅影响 Calibre 的普通下载。使用轻小说工具栏操作可将下载到的译者等资料写入书目列。'),
     )
 
     def _settings(self):
@@ -106,6 +112,9 @@ class LightNovelMetadata(Source):
         if re.fullmatch(r'[1-9][0-9]{4,11}', str(ids.get('spp_tw', ''))):
             sid = str(ids['spp_tw'])
             out.append(('spp_tw', sid, 'https://www.spp.com.tw/SalePage/Index/' + sid))
+        if re.fullmatch(r'[0-9]{12}', str(ids.get('kadokawa_jp', ''))):
+            sid = str(ids['kadokawa_jp'])
+            out.append(('kadokawa_jp', sid, 'https://www.kadokawa.co.jp/product/' + sid + '/'))
         return out
 
     def get_book_url(self, identifiers):
@@ -134,32 +143,52 @@ class LightNovelMetadata(Source):
     def identify_results_keygen(self, title=None, authors=None, identifiers=None):
         return lambda mi: getattr(mi, 'source_relevance', 0)
 
+    def identify_books(self, log, abort, title=None, authors=None, identifiers=None, timeout=30):
+        return Engine(self._settings()).identify(log, abort, title, authors, identifiers, timeout)
+
+    def metadata_for_book(self, record):
+        mi = Metadata(record.title, record.authors)
+        if record.isbn:
+            mi.isbn = record.isbn
+            mi.set_identifier('isbn', record.isbn)
+        for source, source_id in record.identifiers.items():
+            mi.set_identifier(source, source_id)
+        mi.publisher = record.publisher or None
+        mi.languages = [record.language] if record.language else []
+        if record.pubdate:
+            mi.pubdate = datetime.strptime(record.pubdate, '%Y-%m-%d').replace(hour=12, tzinfo=timezone.utc)
+        if record.series and record.series_index is not None:
+            mi.series = record.series
+            mi.series_index = record.series_index
+        mi.comments = comments_html(record) if self.prefs['include_source_comments'] else synopsis_html(record)
+        mi.tags = record.tags
+        mi.has_cover = bool(record.cover and allowed(record.cover, image=True))
+        self.clean_downloaded_metadata(mi)
+        return mi
+
+    def cover_for_book(self, log, abort, record, timeout=15):
+        if not record.cover or not allowed(record.cover, image=True) or abort.is_set():
+            return None
+        client = Client(abort, timeout, self.prefs['request_timeout'])
+        return self._read_cover(log, client, record.cover)
+
+    def _read_cover(self, log, client, url):
+        try:
+            raw = client.read(url, image=True)
+            if not is_image(raw):
+                raise FetchError('图片响应不是有效的封面文件。')
+            return raw
+        except (FetchError, ValueError, OSError) as exc:
+            log.info('封面下载：%s' % exc)
+            return None
+
     def identify(self, log, result_queue, abort, title=None, authors=None, identifiers=None, timeout=30):
-        settings = self._settings()
-        records = Engine(settings).identify(log, abort, title, authors, identifiers, timeout)
+        records = self.identify_books(log, abort, title, authors, identifiers, timeout)
         for i, rec in enumerate(records):
             if abort.is_set():
                 return
-            mi = Metadata(rec.title, rec.authors)
-            if rec.isbn:
-                mi.isbn = rec.isbn
-                # Calibre models ISBN as an identifier; setting it explicitly
-                # also makes the cover cache portable across source results.
-                mi.set_identifier('isbn', rec.isbn)
-            for source, source_id in rec.identifiers.items():
-                mi.set_identifier(source, source_id)
-            mi.publisher = rec.publisher or None
-            mi.languages = [rec.language] if rec.language else []
-            if rec.pubdate:
-                mi.pubdate = datetime.strptime(rec.pubdate, '%Y-%m-%d').replace(tzinfo=timezone.utc)
-            if rec.series and rec.series_index is not None:
-                mi.series = rec.series
-                mi.series_index = rec.series_index
-            mi.comments = comments_html(rec) if settings.get('include_source_comments', True) else (html.escape(rec.description) or None)
-            mi.tags = rec.tags
+            mi = self.metadata_for_book(rec)
             mi.source_relevance = i
-            mi.has_cover = bool(rec.cover and allowed(rec.cover, image=True))
-            self.clean_downloaded_metadata(mi)
             if mi.has_cover:
                 if rec.isbn:
                     self.cache_identifier_to_cover_url('isbn:' + rec.isbn, rec.cover)
@@ -191,10 +220,6 @@ class LightNovelMetadata(Source):
         for url in candidates[:1 if get_best_cover else 3]:
             if abort.is_set() or not allowed(url, image=True):
                 return
-            try:
-                raw = client.read(url, image=True)
-                if not is_image(raw):
-                    raise FetchError('图片响应不是有效的封面文件。')
+            raw = self._read_cover(log, client, url)
+            if raw:
                 result_queue.put((self, raw))
-            except (FetchError, ValueError, OSError) as exc:
-                log.info('封面下载：%s' % exc)

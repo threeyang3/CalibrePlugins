@@ -8,9 +8,7 @@ from zipfile import ZipFile, ZipInfo, ZIP_DEFLATED
 ROOT = Path(__file__).resolve().parent
 
 
-def build(output=None):
-    output = Path(output) if output else ROOT / 'dist' / 'LightNovelMetadata.zip'
-    source = ROOT / 'src'
+def build_package(source, output):
     files = sorted(x for x in source.rglob('*') if x.is_file() and
                    (x.suffix == '.py' or x.name.startswith('plugin-import-name-')))
     for f in files:
@@ -29,6 +27,17 @@ def build(output=None):
     return output
 
 
+def build(output=None):
+    path = Path(output) if output else ROOT / 'dist' / 'LightNovelMetadata.zip'
+    return build_package(ROOT / 'src', path)
+
+
 if __name__ == '__main__':
-    path = build()
-    print('%s (%s bytes)' % (path, path.stat().st_size))
+    import argparse
+
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--output', type=Path, help='Path for the metadata source ZIP')
+    source_zip = build(parser.parse_args().output)
+    library_zip = build_package(ROOT / 'library', source_zip.with_name('LightNovelLibrary.zip'))
+    for path in (source_zip, library_zip):
+        print('%s (%s bytes)' % (path, path.stat().st_size))

@@ -102,7 +102,7 @@ class Record:
                 self.series, self.series_index = candidate_series, candidate_index
             elif self.series_index is None and norm(self.series) == norm(candidate_series):
                 self.series_index = candidate_index
-        if self.source in ('bangumi', 'books_tw', 'kadokawa_tw', 'spp_tw') and self.source_id:
+        if self.source in ('bangumi', 'books_tw', 'kadokawa_jp', 'kadokawa_tw', 'spp_tw') and self.source_id:
             self.identifiers[self.source] = str(self.source_id)
         if not self.source_labels:
             self.source_labels = [self.source]
@@ -134,13 +134,13 @@ def relevance(book, query_title, query_authors=()):
 FIELD_NAMES = ('title', 'authors', 'original_title', 'publisher', 'pubdate',
                'date_text', 'description', 'cover', 'language', 'series',
                'series_index', 'tags', 'illustrators', 'translators')
-SOURCES = ('bangumi', 'books_tw', 'kadokawa_tw', 'spp_tw', 'ncl_tw', 'openbd', 'ndl')
+SOURCES = ('bangumi', 'books_tw', 'kadokawa_jp', 'kadokawa_tw', 'spp_tw', 'ncl_tw', 'openbd', 'ndl')
 
 
 def _source_order(code):
     if code.startswith(('978626', '978986', '978957')):
-        return ('kadokawa_tw', 'spp_tw', 'books_tw', 'ncl_tw', 'bangumi', 'openbd', 'ndl')
-    return ('openbd', 'ndl', 'bangumi', 'kadokawa_tw', 'spp_tw', 'books_tw', 'ncl_tw')
+        return ('kadokawa_tw', 'spp_tw', 'books_tw', 'ncl_tw', 'bangumi', 'openbd', 'ndl', 'kadokawa_jp')
+    return ('kadokawa_jp', 'openbd', 'ndl', 'bangumi', 'kadokawa_tw', 'spp_tw', 'books_tw', 'ncl_tw')
 
 
 def combine(records, preferences=None):

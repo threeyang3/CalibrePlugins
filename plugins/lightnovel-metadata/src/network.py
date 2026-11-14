@@ -9,7 +9,8 @@ from urllib.parse import urlsplit
 from urllib.request import Request, HTTPRedirectHandler, build_opener
 
 META_HOSTS = frozenset(('api.bgm.tv', 'api.openbd.jp', 'ndlsearch.ndl.go.jp',
-                        'search.books.com.tw', 'www.books.com.tw', 'www.kadokawa.com.tw', 'www.spp.com.tw'))
+                        'search.books.com.tw', 'www.books.com.tw', 'www.kadokawa.com.tw', 'www.spp.com.tw',
+                        'www.kadokawa.co.jp', 'store.kadokawa.co.jp'))
 IMAGE_HOSTS = ('lain.bgm.tv', 'bgm.tv', 'cover.openbd.jp', 'books.com.tw',
                'book.com.tw', 'ndlsearch.ndl.go.jp', 'kadokawa.com.tw', 'spp.com.tw', 'shoplineimg.com', 'shoplineapp.com')
 MAX_META = 3 * 1024 * 1024
@@ -31,7 +32,7 @@ def allowed(url, image=False):
         host = p.hostname.lower()
         if not image:
             return host in META_HOSTS
-        return any(host == suffix or host.endswith('.' + suffix) for suffix in IMAGE_HOSTS)
+        return host == 'cdn.kdkw.jp' or any(host == suffix or host.endswith('.' + suffix) for suffix in IMAGE_HOSTS)
     except ValueError:
         return False
 

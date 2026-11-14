@@ -48,7 +48,7 @@ class EngineIntegrationTests(unittest.TestCase):
         calls, messages = [], []
         opts = {'enable_bangumi': True, 'enable_books_tw': False,
                 'enable_openbd': False, 'enable_ndl': False,
-                'enable_kadokawa_tw': False, 'enable_spp_tw': False,
+                'enable_kadokawa_jp': False, 'enable_kadokawa_tw': False, 'enable_spp_tw': False,
                 'resolve_bangumi_series': False}
         opts.update(settings or {})
         factory = lambda abort, timeout, request_timeout: FixtureClient(abort, timeout, request_timeout, routes, calls)
