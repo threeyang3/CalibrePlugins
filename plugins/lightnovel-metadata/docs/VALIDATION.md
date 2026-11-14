@@ -40,6 +40,6 @@ calibre-customize -a dist/LightNovelMetadata.zip
 # 5. NCL 官方 CSV 离线索引（查询/重复导入/不存在的书）
 ```
 
-记录每项来源的 HTTP 状态、页面结构、结果 ISBN、封面 URL 可信域名及 Calibre 字段效果；任何失败不得用同名作品的另一 ISBN 静默替换。真实验证通过后再决定是否合并 PR 或正式发布。
+记录每项来源的 HTTP 状态、页面结构、结果 ISBN、封面 URL 可信域名及 Calibre 字段效果；任何失败不得用同名作品的另一 ISBN 静默替换。PR #2 已于 2026-11-14 合并到 main；v0.2.0 预览 ZIP 已发布在独立分发分支（不是 GitHub Releases 记录）。真实验证通过后再考虑正式稳定版 Release。
 
 本仓库不为该插件添加自动 CI，避免消耗 GitHub Actions 额度。测试、打包和实机验收优先本地执行。
