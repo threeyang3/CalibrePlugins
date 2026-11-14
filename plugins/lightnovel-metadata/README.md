@@ -4,6 +4,14 @@
 
 > **v0.2.0 预览版**：46 项离线单元/模拟适配测试通过；尚未完成真实 Calibre 安装及网站实时数据验收。请先在测试书库试用，不要批量替换已有书目。此版不自动读写 EPUB 内部封面或元数据，也不读取个人评分、笔记、收藏和阅读状态。
 
+## 下载预览版（已合并到 main）
+
+- [直接下载 LightNovelMetadata.zip](https://raw.githubusercontent.com/threeyang3/CalibrePlugins/distribution/lightnovel-metadata-v0.2.0-preview/releases/lightnovel-metadata-v0.2.0-preview/LightNovelMetadata.zip)
+- [SHA-256 校验文件](https://raw.githubusercontent.com/threeyang3/CalibrePlugins/distribution/lightnovel-metadata-v0.2.0-preview/releases/lightnovel-metadata-v0.2.0-preview/LightNovelMetadata.zip.sha256) · [预览版发布说明](https://github.com/threeyang3/CalibrePlugins/blob/distribution/lightnovel-metadata-v0.2.0-preview/releases/lightnovel-metadata-v0.2.0-preview/RELEASE_NOTES.md)
+- [本仓库主分支源码](https://github.com/threeyang3/CalibrePlugins/tree/main/plugins/lightnovel-metadata)
+
+此安装包来自**独立分发分支**，不消耗 GitHub Actions 额度；目前**不是 GitHub Releases 页面中的正式 Release 条目**。已重建并确认安装包与源码构建输出字节级一致（SHA-256：`d13134b3f1d3d1be1e5727738401af517977d30121fc134e2373258624a0f72c`）。真实 Calibre 和网站实测仍待完成。
+
 ## 数据源与查询能力
 
 | 来源 | 触发条件 | 提供的主要字段 | 验证边界 |
@@ -27,7 +35,7 @@ python3 -m unittest discover -s tests -p 'test_*.py' -v
 python3 build.py
 ```
 
-运行时依赖 Calibre 自带 Python 及 `lxml`；构建脚本仅用标准库。将生成的 `dist/LightNovelMetadata.zip` **不解压**，在 Calibre「首选项 → 插件 → 从文件加载插件」中安装，重启后在「元数据下载」里启用 `LightNovel Metadata`。最低目标版本为 Calibre 5.0，macOS/Windows/Linux 实机验收仍待完成。
+运行时依赖 Calibre 自带 Python 及 `lxml`；构建脚本仅用标准库。将下载的预览包或构建生成的 `dist/LightNovelMetadata.zip` **不解压**，在 Calibre「首选项 → 插件 → 从文件加载插件」中安装，重启后在「元数据下载」里启用 `LightNovel Metadata`。最低目标版本为 Calibre 5.0，macOS/Windows/Linux 实机验收仍待完成。
 
 **先用测试书库和已知 ISBN 实测**：核对书名、版次、封面及来源，再决定使用哪些字段；特别注意 Calibre 的「简介」字段可能已经包含你的私人笔记，必要时在 Calibre 元数据下载设置中禁用该字段。
 
@@ -99,4 +107,4 @@ python3 tools/import_ncl.py --output "$HOME/Books/ncl-lightnovels.sqlite" /path/
 
 独立源模块位于 `src/providers/`，融合与安全边界在 `src/models.py`、`src/engine.py`、`src/network.py`，本地 NCL 导入器在 `tools/import_ncl.py`。不依赖 Bangumi-sync、MangaTag 或 WebNovel Metadata 的运行环境，但遵循它们的身份隔离、适配器拆分和增量测试理念。
 
-详见 [验证记录](docs/VALIDATION.md)、[上游数据接口说明](docs/SOURCES.md) 和 [集成提示](docs/INTEGRATION.md)。**无常驻任务，不新增 CI 工作流**；先完成真实 Calibre 客户端和目标网站的手动验收，再考虑正式 Release。许可证见 [LICENSE](LICENSE)，来源使用条件见 [NOTICE.md](NOTICE.md)。
+详见 [验证记录](docs/VALIDATION.md)、[上游数据接口说明](docs/SOURCES.md) 和 [集成提示](docs/INTEGRATION.md)。**无常驻任务，不新增 CI 工作流**；先完成真实 Calibre 客户端和目标网站的手动验收，再考虑正式稳定版 GitHub Release。许可证见 [LICENSE](LICENSE)，来源使用条件见 [NOTICE.md](NOTICE.md)。
