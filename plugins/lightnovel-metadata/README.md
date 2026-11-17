@@ -2,13 +2,13 @@
 
 面向本地 EPUB/电子书书库的 **Calibre 元数据来源插件**，聚合 Bangumi、台版书店与出版社、台湾国家图书馆开放书目，以及日本 openBD、国立国会图书馆（NDL）资料。关注轻小说的**作品、系列、单卷、日文版、繁体中文版**的准确识别。
 
-**v0.3.0 预览版**增加了「轻小说书目」工具栏操作，可按 ISBN 补齐公开书目资料，同时保留已有的书库数据与 EPUB 文件。
+**v0.3.1 预览版**新增三民书局作为台版 ISBN 的备用来源。「轻小说书目」工具栏操作可按 ISBN 补齐公开资料，保留已有的书库数据和 EPUB 文件。本版附带书库操作插件 v0.3.0。
 
 ## 下载预览版
 
-- [LightNovelMetadata.zip](https://github.com/threeyang3/CalibrePlugins/releases/download/lightnovel-metadata-v0.3.0/LightNovelMetadata.zip)
-- [LightNovelLibrary.zip](https://github.com/threeyang3/CalibrePlugins/releases/download/lightnovel-metadata-v0.3.0/LightNovelLibrary.zip)
-- [发布说明与 SHA-256 校验文件](https://github.com/threeyang3/CalibrePlugins/releases/tag/lightnovel-metadata-v0.3.0)
+- [LightNovelMetadata.zip](https://github.com/threeyang3/CalibrePlugins/releases/download/lightnovel-metadata-v0.3.1/LightNovelMetadata.zip)
+- [LightNovelLibrary.zip](https://github.com/threeyang3/CalibrePlugins/releases/download/lightnovel-metadata-v0.3.1/LightNovelLibrary.zip)
+- [发布说明与 SHA-256 校验文件](https://github.com/threeyang3/CalibrePlugins/releases/tag/lightnovel-metadata-v0.3.1)
 
 ## 数据源与查询能力
 
@@ -16,6 +16,7 @@
 | --- | --- | --- | --- |
 | [Bangumi v0](https://bangumi.github.io/api/) | 书名 / Subject ID / 条目 URL | 中日书名、作者、插画师、标签、简介、卷册、关系 | 只接受明确标注为**小说**的条目；按系列关系复核主系列，不以同名推断 |
 | [博客来](https://www.books.com.tw/) | 书名、ISBN、商品 ID/URL | 繁体版书名、ISBN、译者、出版社、封面 | 要求商品身份与 ISBN 均可核验；HTML 解析尚待在线验证 |
+| [三民书局](https://www.sanmin.com.tw/) | 台版 ISBN、商品 ID/URL | 繁体版书名、译者、出版社、出版日期、封面 | 台版 ISBN 备用来源；商品页的 ISBN 必须一致 |
 | [台灣角川](https://www.kadokawa.com.tw/) | **精确台湾 ISBN** 或 `products/ISBN` URL | 正式商品页书名、作者、插画师、封面、上市日期 | 官方商品页规范 URL **及正文 ISBN 必须一致**；不猜测套装 SKU |
 | [尖端出版](https://www.spp.com.tw/) | **精确商品 ID 或 SalePage/Index URL** | 商品条码 ISBN、作者、绘者、译者、封面、上市日期 | 依商品编号和商品特色栏核验；不使用未确认的搜索接口 |
 | [台湾国家图书馆开放书目](https://data.gov.tw/dataset/6730) | **用户预先导入的本地 SQLite 索引**，ISBN/书名 | ISBN、申请书名、作者、出版机构、预订出版日 | 离线查询；预订日期**不会当作正式出版日期** |
@@ -53,6 +54,7 @@ isbn:9786264354356
 kadokawa_tw:9786264354356
 spp_tw:10055328
 books_tw:0011234567
+sanmin_tw:011499432
 bangumi:123456
 ```
 
@@ -62,6 +64,7 @@ bangumi:123456
 https://www.kadokawa.com.tw/products/9786264354356
 https://www.spp.com.tw/SalePage/Index/10055328
 https://www.books.com.tw/products/0011234567
+https://www.sanmin.com.tw/product/index/011499432
 https://bgm.tv/subject/123456
 ```
 
@@ -71,13 +74,13 @@ https://bgm.tv/subject/123456
 
 在「元数据下载 → 配置 LightNovel Metadata」里可填写各字段首选来源。十个来源优先项包括：**书名、作者、出版社、日期、封面、简介、系列、标签、插画师、译者**。默认值均为 `auto`。
 
-可填入下列来源代号之一：`bangumi`、`books_tw`、`kadokawa_tw`、`spp_tw`、`ncl_tw`、`openbd`、`ndl`、`kadokawa_jp`，或 `auto`。例如：
+可填入 `bangumi`、`books_tw`、`kadokawa_tw`、`spp_tw`、`ncl_tw`、`openbd`、`ndl`、`kadokawa_jp`、`sanmin_tw` 或 `auto`。按台版 ISBN 查询时，若首选来源的候选缺少书目、封面链接或译者，插件会再查三民。也可将相关字段的首选来源设为 `sanmin_tw`。例如：
 
 - `pref_title = books_tw`：同一 ISBN 下优先使用博客来的繁体书名。
 - `pref_cover = kadokawa_tw`：同一 ISBN 下优先使用台湾角川的封面。
 - `pref_description = bangumi`：同一 ISBN 下优先使用 Bangumi 的简介。
 
-**优先级仅作用于 checksum 正确、完全相同 ISBN 的记录**。首选来源缺失该字段时退回其他匹配来源，不会因此借用日版/台版的另一 ISBN。对于同一 ISBN 存在不同来源 ID、冲突卷次或语言的情况，拒绝合并并保留独立候选。`tags`、插画师及译者在 `auto` 下去重合并，明确指定来源则不跨来源拼接。
+**优先级仅作用于校验通过且 ISBN 完全相同的记录**。首选来源缺失该字段时退回其他匹配来源。对于同一 ISBN 存在不同来源 ID、冲突卷次或语言的情况，拒绝合并并保留独立候选。`tags`、插画师及译者在 `auto` 下去重合并，其中三民的署名用于补齐其他来源未提供的译者或插画师。
 
 在元数据源设置里，可选择让普通下载的简介显示书目字段和来源。默认下载简介正文。书库操作会将公开译者等信息写入对应的书目列。
 

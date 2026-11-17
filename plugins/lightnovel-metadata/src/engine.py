@@ -3,14 +3,15 @@ import re
 from urllib.parse import urlsplit
 from .models import combine, isbn, norm, relevance, clean, FIELD_NAMES
 from .network import Client, FetchError, allowed
-from .providers import bangumi, books_tw, kadokawa_jp, kadokawa_tw, ncl_tw, ndl, openbd, spp_tw
+from .providers import bangumi, books_tw, kadokawa_jp, kadokawa_tw, ncl_tw, ndl, openbd, sanmin_tw, spp_tw
 
 SOURCE_NAMES = {'bangumi': 'Bangumi', 'books_tw': '博客来（台湾）',
-                'kadokawa_tw': '台灣角川', 'spp_tw': '尖端出版',
+                'kadokawa_tw': '台灣角川', 'spp_tw': '尖端出版', 'sanmin_tw': '三民书局',
                 'ncl_tw': '台湾国家图书馆开放书目',
                 'kadokawa_jp': 'KADOKAWA', 'ndl': '日本国立国会图书馆',
                 'openbd': 'openBD（日本）'}
-RESULT_ORDER = ('kadokawa_tw', 'spp_tw', 'books_tw', 'ncl_tw', 'bangumi', 'kadokawa_jp', 'openbd', 'ndl')
+RESULT_ORDER = ('kadokawa_tw', 'spp_tw', 'books_tw', 'sanmin_tw', 'ncl_tw', 'bangumi', 'kadokawa_jp', 'openbd', 'ndl')
+TAIWAN_ISBN_PREFIXES = ('978626', '978986', '978957')
 
 
 def explicit_sources(title, identifiers):
@@ -18,6 +19,7 @@ def explicit_sources(title, identifiers):
     ids = {}
     for key, pattern in (('bangumi', r'[1-9][0-9]{0,11}'),
                          ('books_tw', r'001[0-9]{7}'),
+                         ('sanmin_tw', sanmin_tw.ID),
                          ('spp_tw', r'[1-9][0-9]{4,11}'),
                          ('kadokawa_jp', kadokawa_jp.ID),
                          ('kadokawa_tw', r'[0-9]{13}')):
@@ -42,6 +44,9 @@ def explicit_sources(title, identifiers):
         elif parsed.hostname == 'www.books.com.tw':
             sid = books_tw.product_id(raw.split('?', 1)[0])
             key = 'books_tw'
+        elif parsed.hostname == 'www.sanmin.com.tw':
+            sid = sanmin_tw.product_id(raw)
+            key = 'sanmin_tw'
         elif parsed.hostname == 'www.kadokawa.com.tw':
             sid = kadokawa_tw.isbn_from_url(raw)
             key = 'kadokawa_tw'
@@ -116,6 +121,7 @@ class Engine:
         # Explicit site IDs have priority. Do not fall back to a homonymous work.
         loaders = {'bangumi': bangumi.detail, 'books_tw': books_tw.detail,
                    'kadokawa_tw': kadokawa_tw.detail, 'spp_tw': spp_tw.detail,
+                   'sanmin_tw': lambda client, sid: sanmin_tw.detail(client, sid, code),
                    'kadokawa_jp': lambda client, sid: kadokawa_jp.detail(client, sid, code)}
         for provider, sid in ids.items():
             if abort.is_set():
@@ -158,10 +164,11 @@ class Engine:
             books = attempt('ndl', '题名搜索', lambda: ndl.search(client, title=jp_title, limit=max_hits)) or []
             found.extend(rec for rec in books if relevance(rec, jp_title, authors) is not None)
 
-        # ISBN lookup is edition-specific. Discover Japanese ISBNs in NDL and openBD;
-        # only a Taiwan Books.com.tw product match may establish a Taiwan ISBN.
+        # ISBN lookup is edition-specific. Confirm storefront search hits on their product pages.
         isbn_pool = set([code] if code else [])
         isbn_pool.update(rec.isbn for rec in found if rec.isbn)
+        taiwan_isbn_search = not direct and code.startswith(TAIWAN_ISBN_PREFIXES)
+        preferences = {field: self.settings.get('pref_' + field, 'auto') for field in FIELD_NAMES}
         if code.startswith('9784') and not direct:
             product_ids = attempt('kadokawa_jp', 'ISBN 搜索',
                                   lambda: kadokawa_jp.search(client, code, max_hits)) or []
@@ -169,23 +176,34 @@ class Engine:
                 rec = attempt('kadokawa_jp', '商品', lambda pid=pid: kadokawa_jp.detail(client, pid, code))
                 if rec:
                     found.append(rec)
-        if code and not direct and code.startswith(('978626', '978986', '978957')):
+        if taiwan_isbn_search:
             # Bookstore search returns product IDs, not ISBNs; validate the actual detail ISBN.
             ids_tw = attempt('books_tw', 'ISBN 搜索', lambda: books_tw.search(client, code, max_hits)) or []
             for pid in ids_tw:
                 rec = attempt('books_tw', '商品', lambda pid=pid: books_tw.detail(client, pid))
                 if rec and rec.isbn == code:
                     found.append(rec)
-        if code and not direct and not code.startswith(('978626', '978986', '978957')):
+        if code and not direct and not taiwan_isbn_search:
             found.extend(attempt('ndl', 'ISBN', lambda: ndl.search(client, isbn_value=code, limit=3)) or [])
         # Taiwan official publisher pages: only exact ISBN URLs, no guessed
         # keyword search or product IDs. Different SKUs may have different ISBNs.
-        tw_codes = sorted(v for v in isbn_pool if v.startswith(('978626', '978986', '978957')))[:max_hits]
+        tw_codes = sorted(v for v in isbn_pool if v.startswith(TAIWAN_ISBN_PREFIXES))[:max_hits]
         for number in tw_codes:
             if not (direct and 'kadokawa_tw' in ids and ids['kadokawa_tw'] == number):
                 rec = attempt('kadokawa_tw', 'ISBN', lambda number=number: kadokawa_tw.detail(client, number))
                 if rec:
                     found.append(rec)
+
+        if taiwan_isbn_search:
+            editions = [rec for rec in found if rec.isbn == code and not rec.work_level]
+            has_cover = any(allowed(rec.cover, image=True) for rec in editions)
+            has_translators = any(rec.translators for rec in editions)
+            if not (has_cover and has_translators) or 'sanmin_tw' in preferences.values():
+                sanmin_ids = attempt('sanmin_tw', 'ISBN 搜索', lambda: sanmin_tw.search(client, code, max_hits)) or []
+                for pid in sanmin_ids:
+                    rec = attempt('sanmin_tw', '商品', lambda pid=pid: sanmin_tw.detail(client, pid, code))
+                    if rec and rec.isbn == code:
+                        found.append(rec)
 
         # NCL is an optional OFFLINE indexed data set; no automatic CSV download.
         ncl_path = clean(self.settings.get('ncl_index_path', ''))
@@ -227,7 +245,7 @@ class Engine:
                 r.cover = ''
         # Source records can only be fused on a checksum-valid, identical ISBN.
         try:
-            result = combine(unique, {field: self.settings.get('pref_' + field, 'auto') for field in FIELD_NAMES})
+            result = combine(unique, preferences)
         except ValueError as error:
             # Inconsistent source identities must be shown independently, not fused.
             self._log(log, '不同条目声称相同 ISBN，但来源 ID 存在冲突；已禁止融合：%s' % error)

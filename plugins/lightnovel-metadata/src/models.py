@@ -102,7 +102,7 @@ class Record:
                 self.series, self.series_index = candidate_series, candidate_index
             elif self.series_index is None and norm(self.series) == norm(candidate_series):
                 self.series_index = candidate_index
-        if self.source in ('bangumi', 'books_tw', 'kadokawa_jp', 'kadokawa_tw', 'spp_tw') and self.source_id:
+        if self.source in ('bangumi', 'books_tw', 'kadokawa_jp', 'kadokawa_tw', 'spp_tw', 'sanmin_tw') and self.source_id:
             self.identifiers[self.source] = str(self.source_id)
         if not self.source_labels:
             self.source_labels = [self.source]
@@ -134,13 +134,13 @@ def relevance(book, query_title, query_authors=()):
 FIELD_NAMES = ('title', 'authors', 'original_title', 'publisher', 'pubdate',
                'date_text', 'description', 'cover', 'language', 'series',
                'series_index', 'tags', 'illustrators', 'translators')
-SOURCES = ('bangumi', 'books_tw', 'kadokawa_jp', 'kadokawa_tw', 'spp_tw', 'ncl_tw', 'openbd', 'ndl')
+SOURCES = ('bangumi', 'books_tw', 'kadokawa_jp', 'kadokawa_tw', 'spp_tw', 'ncl_tw', 'openbd', 'ndl', 'sanmin_tw')
 
 
 def _source_order(code):
     if code.startswith(('978626', '978986', '978957')):
-        return ('kadokawa_tw', 'spp_tw', 'books_tw', 'ncl_tw', 'bangumi', 'openbd', 'ndl', 'kadokawa_jp')
-    return ('kadokawa_jp', 'openbd', 'ndl', 'bangumi', 'kadokawa_tw', 'spp_tw', 'books_tw', 'ncl_tw')
+        return ('kadokawa_tw', 'spp_tw', 'books_tw', 'sanmin_tw', 'ncl_tw', 'bangumi', 'openbd', 'ndl', 'kadokawa_jp')
+    return ('kadokawa_jp', 'openbd', 'ndl', 'bangumi', 'kadokawa_tw', 'spp_tw', 'books_tw', 'ncl_tw', 'sanmin_tw')
 
 
 def combine(records, preferences=None):
@@ -198,9 +198,11 @@ def combine(records, preferences=None):
         # selection switches those fields to single-source preference.
         for key in ('tags', 'translators', 'illustrators'):
             if prefs.get(key, 'auto') == 'auto':
-                setattr(merged, key, list(dict.fromkeys(value for r in sorted_group
-                                                       for value in getattr(r, key))))
-                merged.field_sources[key] = ','.join(r.source for r in sorted_group if getattr(r, key))
+                contributors = [r for r in sorted_group if getattr(r, key)]
+                if key != 'tags':
+                    contributors = [r for r in contributors if r.source != 'sanmin_tw'] or contributors
+                setattr(merged, key, list(dict.fromkeys(value for r in contributors for value in getattr(r, key))))
+                merged.field_sources[key] = ','.join(r.source for r in contributors)
         for rec in sorted_group:
             if rec.series_subject_id:
                 merged.series_subject_id = rec.series_subject_id

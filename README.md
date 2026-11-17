@@ -8,7 +8,7 @@
 | --- | --- | --- | --- |
 | **Douban · 豆瓣书籍资料与个人阅读记录** | 原有豆瓣公共元数据下载 + 可选的个人标签、评分、阅读状态、简评导入 | `v0.1.0` 预览版 | [版本发布](https://github.com/threeyang3/CalibrePlugins/releases/tag/douban-v0.1.0) · [使用说明](plugins/douban/README.md) |
 | **WebNovel Metadata · 网文元数据** | 从起点、七猫、番茄获取简介、封面和分类；在 Calibre 栏目中记录首发日期、字数及可点击的连载平台 | `v0.2.0` 预览版 | [版本发布](https://github.com/threeyang3/CalibrePlugins/releases/tag/webnovel-metadata-v0.2.0) · [使用说明](plugins/webnovel-metadata/README.md) |
-| **LightNovel Metadata · 轻小说元数据** | 从 Bangumi、台日出版书目等来源下载元数据和封面，按 ISBN 补齐书库栏目并保留手填资料 | `v0.3.0` 预览版 | [版本发布](https://github.com/threeyang3/CalibrePlugins/releases/tag/lightnovel-metadata-v0.3.0) · [使用说明](plugins/lightnovel-metadata/README.md) |
+| **LightNovel Metadata · 轻小说元数据** | 从 Bangumi、台日出版书目等来源下载元数据和封面，按 ISBN 补齐书库栏目并保留手填资料 | `v0.3.1` 预览版 | [版本发布](https://github.com/threeyang3/CalibrePlugins/releases/tag/lightnovel-metadata-v0.3.1) · [使用说明](plugins/lightnovel-metadata/README.md) |
 
 ## 目录规范
 
@@ -41,7 +41,7 @@ CalibrePlugins/
 
 网文插件的 [v0.2.0 预览版 Release](https://github.com/threeyang3/CalibrePlugins/releases/tag/webnovel-metadata-v0.2.0) 提供 `WebNovelMetadata.zip`（普通元数据及封面下载）和 `WebNovelLibrary.zip`（书库栏目与批量更新）。番茄匿名搜索受限时，可使用作品 ID 或官网详情页 URL。
 
-轻小说插件的 [v0.3.0 预览版 Release](https://github.com/threeyang3/CalibrePlugins/releases/tag/lightnovel-metadata-v0.3.0) 提供 `LightNovelMetadata.zip`（元数据及封面下载）和 `LightNovelLibrary.zip`（书库栏目与 ISBN 补齐）。两包均附 SHA-256 校验文件。
+轻小说插件的 v0.3.1 预览版提供 `LightNovelMetadata.zip`（元数据及封面下载）和 `LightNovelLibrary.zip`（书库栏目与 ISBN 补齐）。两包均附 SHA-256 校验文件。[v0.3.1 预览版 Release](https://github.com/threeyang3/CalibrePlugins/releases/tag/lightnovel-metadata-v0.3.1)
 
 ## 开发与许可
 

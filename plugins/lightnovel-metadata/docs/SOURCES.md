@@ -6,6 +6,7 @@
 | --- | --- | --- |
 | Bangumi v0 | https://bangumi.github.io/api/ | Subject ID 是公共作品/卷次条目身份，关系需再核对系列条目；小说子分类应兼容数字 `1002` 和文字 `小说` 等，不能误收漫画 |
 | 台湾博客来 | https://www.books.com.tw/ | 商品 `001...` ID + 自身 ISBN；书名搜索会依 HTML 结构退化 |
+| 三民书局 | https://www.sanmin.com.tw/ | `/search?isbn=` 查找候选，按商品页 ID 和自身 ISBN 核验纸本版次；封面来自 `cdnec.sanmin.com.tw` |
 | 台灣角川 | https://www.kadokawa.com.tw/ | `products/{ISBN}` + 页面声明 ISBN；不对 SKU、预购套组作推测 |
 | 尖端 | https://www.spp.com.tw/ | `SalePage/Index/{商品ID}` + 商品特色条码 ISBN；不猜测网站搜索接口 |
 | 台湾国家图书馆 | https://data.gov.tw/dataset/6730 | **官方下载 CSV**，本地 `tools/import_ncl.py` 生成离线索引；书目属于出版前申请，预订日期不是确认出版日期 |

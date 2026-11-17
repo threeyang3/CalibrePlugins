@@ -179,6 +179,10 @@ def main():
             check(not apply_book(db, book_id, source, bare_record), 'No cover update without cover data')
             check(db.field_for('#lightnovel_translator', book_id) == '书目译者一、书目译者二',
                   'A later incomplete source leaves existing credits intact')
+            db.set_field('#lightnovel_translator', {book_id: '手填书目译者'})
+            apply_book(db, book_id, source, record, cover=image_bytes('red'))
+            check(db.field_for('#lightnovel_translator', book_id) == '手填书目译者',
+                  'An incoming translator cannot replace a manually entered catalogue credit')
             check(db.field_for('publisher', book_id) == local.publisher,
                   'Do not modify the existing local publisher')
 

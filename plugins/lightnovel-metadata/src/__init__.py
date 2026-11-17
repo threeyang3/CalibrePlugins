@@ -10,6 +10,7 @@ from calibre.ebooks.metadata.sources.base import Option, Source
 from .engine import Engine, SOURCE_NAMES, explicit_sources
 from .models import isbn
 from .network import Client, FetchError, allowed, is_image
+from .providers import sanmin_tw
 
 
 SOURCE_PREFERENCE_HELP = 'auto / ' + ' / '.join(SOURCE_NAMES) + '；仅同 ISBN 合并时应用。'
@@ -55,14 +56,15 @@ class LightNovelMetadata(Source):
     name = 'LightNovel Metadata'
     author = 'threeyang3'
     description = '轻小说分卷元数据：Bangumi、台版出版社和书店、NCL 离线书目，以及日本 KADOKAWA、openBD 和 NDL。'
-    version = (0, 3, 0)
+    version = (0, 3, 1)
     minimum_calibre_version = (5, 0, 0)
     supported_platforms = ['windows', 'osx', 'linux']
     capabilities = frozenset(('identify', 'cover'))
     touched_fields = frozenset(('title', 'authors', 'publisher', 'pubdate', 'comments', 'tags',
                                 'languages', 'isbn', 'series', 'series_index',
                                 'identifier:bangumi', 'identifier:books_tw',
-                                'identifier:kadokawa_tw', 'identifier:spp_tw', 'identifier:kadokawa_jp'))
+                                'identifier:kadokawa_tw', 'identifier:spp_tw', 'identifier:kadokawa_jp',
+                                'identifier:sanmin_tw'))
     has_html_comments = True
     cached_cover_url_is_reliable = False
     can_get_multiple_covers = True
@@ -70,6 +72,7 @@ class LightNovelMetadata(Source):
     options = (
         Option('enable_bangumi', 'bool', True, '启用 Bangumi', '公开条目及标签；不需要 Token，不获取个人收藏。'),
         Option('enable_books_tw', 'bool', True, '启用博客来（台湾）', '公开印刷书商品页。页面变化时可暂时关闭。'),
+        Option('enable_sanmin_tw', 'bool', True, '启用三民书局（台湾）', '台版 ISBN 的备用来源，核对同一版本的译者、封面和书目信息。'),
         Option('enable_kadokawa_tw', 'bool', True, '启用台灣角川', '有 ISBN 时查询出版社商品页；不猜测套装版商品号。'),
         Option('enable_spp_tw', 'bool', True, '启用尖端出版', '仅根据尖端完整商品链接或商品 ID 获取。'),
         Option('enable_ncl_tw', 'bool', True, '启用 NCL 台湾官方书目', '需要先配置本地 SQLite 索引，不联网下载大数据集。'),
@@ -106,6 +109,9 @@ class LightNovelMetadata(Source):
         if re.fullmatch(r'001[0-9]{7}', str(ids.get('books_tw', ''))):
             sid = str(ids['books_tw'])
             out.append(('books_tw', sid, 'https://www.books.com.tw/products/' + sid))
+        if re.fullmatch(sanmin_tw.ID, str(ids.get('sanmin_tw', ''))):
+            sid = str(ids['sanmin_tw'])
+            out.append(('sanmin_tw', sid, sanmin_tw.PRODUCT.format(sid)))
         if re.fullmatch(r'97[89][0-9]{10}', str(ids.get('kadokawa_tw', ''))) and isbn(ids['kadokawa_tw']):
             sid = str(ids['kadokawa_tw'])
             out.append(('kadokawa_tw', sid, 'https://www.kadokawa.com.tw/products/' + sid))

@@ -10,12 +10,12 @@ from urllib.request import Request, HTTPRedirectHandler, build_opener
 
 META_HOSTS = frozenset(('api.bgm.tv', 'api.openbd.jp', 'ndlsearch.ndl.go.jp',
                         'search.books.com.tw', 'www.books.com.tw', 'www.kadokawa.com.tw', 'www.spp.com.tw',
-                        'www.kadokawa.co.jp', 'store.kadokawa.co.jp'))
+                        'www.kadokawa.co.jp', 'store.kadokawa.co.jp', 'www.sanmin.com.tw'))
 IMAGE_HOSTS = ('lain.bgm.tv', 'bgm.tv', 'cover.openbd.jp', 'books.com.tw',
                'book.com.tw', 'ndlsearch.ndl.go.jp', 'kadokawa.com.tw', 'spp.com.tw', 'shoplineimg.com', 'shoplineapp.com')
 MAX_META = 3 * 1024 * 1024
 MAX_IMAGE = 9 * 1024 * 1024
-UA = 'LightNovelMetadata/0.2 (Calibre manual book lookup; https://github.com/threeyang3/CalibrePlugins)'
+UA = 'LightNovelMetadata/0.3 (Calibre manual book lookup; https://github.com/threeyang3/CalibrePlugins)'
 
 
 class FetchError(ValueError):
@@ -32,7 +32,8 @@ def allowed(url, image=False):
         host = p.hostname.lower()
         if not image:
             return host in META_HOSTS
-        return host == 'cdn.kdkw.jp' or any(host == suffix or host.endswith('.' + suffix) for suffix in IMAGE_HOSTS)
+        return host in ('cdn.kdkw.jp', 'cdnec.sanmin.com.tw') or any(
+            host == suffix or host.endswith('.' + suffix) for suffix in IMAGE_HOSTS)
     except ValueError:
         return False
 

@@ -46,7 +46,7 @@ class FixtureClient:
 class EngineIntegrationTests(unittest.TestCase):
     def run_lookup(self, routes, settings=None, **query):
         calls, messages = [], []
-        opts = {'enable_bangumi': True, 'enable_books_tw': False,
+        opts = {'enable_bangumi': True, 'enable_books_tw': False, 'enable_sanmin_tw': False,
                 'enable_openbd': False, 'enable_ndl': False,
                 'enable_kadokawa_jp': False, 'enable_kadokawa_tw': False, 'enable_spp_tw': False,
                 'resolve_bangumi_series': False}
